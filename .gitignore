@@ -19,3 +19,5 @@
 
 # Go workspace file
 go.work
+
+cmd/mos6510op/mos6510op
