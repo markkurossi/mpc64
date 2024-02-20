@@ -20,6 +20,11 @@ func (op Opcode) String() string {
 	return Instructions[op].Name
 }
 
+// Size returns the size of the opcode and its arguments in bytes.
+func (op Opcode) Size() int {
+	return 1 + Instructions[op].Addr.Size()
+}
+
 // AddrMode defines 6510 instruction addressing modes.
 type AddrMode byte
 
@@ -136,6 +141,11 @@ func (i Instr) String() string {
 		}
 	}
 	return str
+}
+
+// Size returns the instruction size (opcode + argument) in bytes.
+func (i Instr) Size() int {
+	return 1 + i.Addr.Size()
 }
 
 var logicalAndArithmeticInstructions = []string{
