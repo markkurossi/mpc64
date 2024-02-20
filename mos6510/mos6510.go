@@ -23,19 +23,59 @@ func (op Opcode) String() string {
 // AddrMode defines 6510 instruction addressing modes.
 type AddrMode byte
 
+// 6510 addressing modes.
+const (
+	// Implied or Accumulator addressing, no data followed by the
+	// opcode.
+	AddrImp AddrMode = iota
+
+	// Immediate addressing, one byte of data: #64, $40
+	AddrIMM
+
+	// Absolute addressing, address in low-endian format: $lo,$hi
+	AddrABS
+
+	// Absolute addressing indexed with X: $lo,$hi + X
+	AddrABX
+
+	// Absolute addressing indexed with X: $lo,$hi + Y
+	AddrABY
+
+	// Zeropage addressing, one byte index in zeropage: $lo
+	AddrZP
+
+	// Zeropage addressing indexed with X: $lo + X
+	AddrZPX
+
+	// Zeropage addressing indexed with Y: $lo + Y
+	AddrZPY
+
+	// Relative addressing: signed 8-bit PC-relative offset: #-10
+	AddrREL
+
+	// Absolute-indirect addressing: vector to address: ($lo,$hi)
+	AddrIND
+
+	// Indexed-indirect addressing indexed with X: ($lo,X)
+	AddrIZX
+
+	// Indexed-indirect addressing indexed with Y: ($lo),Y
+	AddrIZY
+)
+
 var addrModes = map[AddrMode]string{
 	AddrImp: "",
 	AddrIMM: "imm",
-	AddrZP:  "zp",
-	AddrZPX: "zpx",
-	AddrZPY: "zpy",
-	AddrIZX: "izx",
-	AddrIZY: "izy",
 	AddrABS: "abs",
 	AddrABX: "abx",
 	AddrABY: "aby",
-	AddrIND: "ind",
+	AddrZP:  "zp",
+	AddrZPX: "zpx",
+	AddrZPY: "zpy",
 	AddrREL: "rel",
+	AddrIND: "ind",
+	AddrIZX: "izx",
+	AddrIZY: "izy",
 }
 
 func (m AddrMode) String() string {
@@ -46,21 +86,30 @@ func (m AddrMode) String() string {
 	return fmt.Sprintf("{AddrMode %d}", m)
 }
 
-// 6510 addressing modes.
-const (
-	AddrImp AddrMode = iota
-	AddrIMM          // #$00
-	AddrZP           // $00
-	AddrZPX          // $00,X
-	AddrZPY          // $00,Y
-	AddrIZX          // ($00,X)
-	AddrIZY          // ($00,Y)
-	AddrABS          // $0000
-	AddrABX          // $0000,X
-	AddrABY          // $0000,Y
-	AddrIND          // ($0000)
-	AddrREL          // $0000 (PC-relative)
-)
+var addrModeSizes = map[AddrMode]int{
+	AddrImp: 0,
+	AddrIMM: 1,
+	AddrABS: 2,
+	AddrABX: 2,
+	AddrABY: 2,
+	AddrZP:  1,
+	AddrZPX: 1,
+	AddrZPY: 1,
+	AddrREL: 1,
+	AddrIND: 2,
+	AddrIZX: 1,
+	AddrIZY: 1,
+}
+
+// Size returns the number of bytes of data the addressing mode has
+// followed by the opcode.
+func (m AddrMode) Size() int {
+	size, ok := addrModeSizes[m]
+	if !ok {
+		panic("invalid addressing mode")
+	}
+	return size
+}
 
 // Instr provides 6510 instruction information.
 type Instr struct {
