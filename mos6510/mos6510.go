@@ -4,6 +4,14 @@
 // All rights reserved.
 //
 
+// Package mos6510 implements the MOS6510 CPU.
+//
+// Registers:
+// - Program Counter (PC or IP): 16 bits
+// - Status Register (.P): 8 bits
+// - Accumulator (.A): 8 bits
+// - Index Registres (.X and .Y): 8 bits
+// - Stack Pointer (SP): 8 bits
 package mos6510
 
 import (
@@ -23,6 +31,32 @@ func (op Opcode) String() string {
 // Size returns the size of the opcode and its arguments in bytes.
 func (op Opcode) Size() int {
 	return 1 + Instructions[op].Addr.Size()
+}
+
+// ArgSize returns the size of the opcode's arguments in bytes.
+func (op Opcode) ArgSize() int {
+	return Instructions[op].Addr.Size()
+}
+
+// AddrMode returns the opcode's AddrMode.
+func (op Opcode) AddrMode() AddrMode {
+	return Instructions[op].Addr
+}
+
+// Data describes if the opcode reads or writes memory.
+func (op Opcode) Data() bool {
+	return Instructions[op].Data
+}
+
+// Jump describes if the opcode changes the program execution address.
+func (op Opcode) Jump() bool {
+	return Instructions[op].Jump
+}
+
+// BlockEnd describes if the opcode terminates a basic block i.e. the
+// program will not advance to the next instruction.
+func (op Opcode) BlockEnd() bool {
+	return Instructions[op].BlockEnd
 }
 
 // AddrMode defines 6510 instruction addressing modes.
@@ -123,6 +157,9 @@ type Instr struct {
 	Addr         AddrMode
 	Cycles       int
 	PageBoundary bool
+	Data         bool
+	Jump         bool
+	BlockEnd     bool
 }
 
 func (i Instr) String() string {
@@ -163,4 +200,61 @@ var jumpFlagInstructions = []string{
 	"BPL", "BMI", "BVC", "BVS", "BCC", "BCS", "BNE", "BEQ",
 	"BRK", "RTI", "JSR", "RTS", "JMP", "BIT", "CLC", "SEC",
 	"CLD", "SED", "CLI", "SEI", "CLV", "NOP",
+}
+
+var dataInstructions = map[string]bool{
+	"ORA": true,
+	"AND": true,
+	"EOR": true,
+	"ADC": true,
+	"SBC": true,
+	"CMP": true,
+	"CPX": true,
+	"CPY": true,
+	"DEC": true,
+	"INC": true,
+	"ASL": true,
+	"ROL": true,
+	"LSR": true,
+	"ROR": true,
+	"LDA": true,
+	"STA": true,
+	"LDX": true,
+	"STX": true,
+	"LDY": true,
+	"STY": true,
+}
+
+var jumpInstructions = map[string]bool{
+	"BPL": true,
+	"BMI": true,
+	"BVC": true,
+	"BVS": true,
+	"BCC": true,
+	"BCS": true,
+	"BNE": true,
+	"BEQ": true,
+	"JSR": true,
+	"JMP": true,
+}
+
+var blockEndInstuctions = map[string]bool{
+	"BRK": true,
+	"RTI": true,
+	"RTS": true,
+	"JMP": true,
+}
+
+func init() {
+	for idx, instr := range Instructions {
+		if dataInstructions[instr.Name] {
+			Instructions[idx].Data = true
+		}
+		if jumpInstructions[instr.Name] {
+			Instructions[idx].Jump = true
+		}
+		if blockEndInstuctions[instr.Name] {
+			Instructions[idx].BlockEnd = true
+		}
+	}
 }
